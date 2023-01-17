@@ -29,6 +29,21 @@ function respondAndRenderTodo(id, res, viewName) {
   }
 }
 
+function validateTodoInsertUpdateRedirect(req, res, callback) {
+  if(validTodo(req.body)) {
+    const todo = {
+      title: req.body.title,
+      description: req.body.description,
+      priority: req.body.priority
+    };
+    callback(todo);
+  } else {
+    res.status(500);
+    res.render('error', {
+      message: 'Invalid Todo'
+    });
+  }
+}
 router.get('/', (req, res) => {
   knex('todo')
     .select()
@@ -42,25 +57,15 @@ router.get('/new', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-  if(validTodo(req.body)) {
-    const todo = {
-      title: req.body.title,
-      description: req.body.description,
-      priority: req.body.priority,
-      date: new Date()
-    };
+  validateTodoInsertUpdateRedirect(req, res, (todo) => {
+    todo.date = new Date();
     knex('todo')
       .insert(todo, 'id')
       .then(ids => {
         const id = ids[0];
         res.redirect(`/todo/${id}`);
       });
-  } else {
-    res.status(500);
-    res.render('error', {
-      message: 'Invalid Todo'
-    });
-  }
+  });
 });
 
 router.get('/:id', (req, res) => {
@@ -71,6 +76,17 @@ router.get('/:id', (req, res) => {
 router.get('/:id/edit', (req, res) => {
   const id = req.params.id;
   respondAndRenderTodo(id, res, 'edit');
+});
+
+router.put('/:id', (req, res) => {
+  validateTodoInsertUpdateRedirect(req, res, (todo) => {
+    knex('todo')
+      .where('id', req.params.id)
+      .update(todo, 'id')
+      .then(() => {
+        res.redirect(`/todo/${req.params.id}`);
+      });
+  });
 });
 
 module.exports = router;
