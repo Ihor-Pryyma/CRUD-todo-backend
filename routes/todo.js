@@ -45,6 +45,11 @@ function validateTodoInsertUpdateRedirect(req, res, callback) {
     });
   }
 }
+
+router.get('/new', (req, res) => {
+  res.render('new');
+});
+
 router.get('/', (req, res) => {
   knex('todo')
     .select()
@@ -53,17 +58,13 @@ router.get('/', (req, res) => {
     });
 });
 
-router.get('/new', (req, res) => {
-  res.render('new');
-});
-
 router.post('/', (req, res) => {
   validateTodoInsertUpdateRedirect(req, res, (todo) => {
     todo.date = new Date();
     knex('todo')
       .insert(todo, 'id')
       .then(ids => {
-        const id = ids[0];
+        const { id } = ids[0];
         res.redirect(`/todo/${id}`);
       });
   });
