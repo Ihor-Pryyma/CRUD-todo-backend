@@ -12,6 +12,7 @@ function validTodo(todo) {
                 !isNaN(Number(todo.priority));
 }
 
+
 function respondAndRenderTodo(id, res, viewName) {
   if(typeof id !== 'undefined') {
     knex('todo')
@@ -87,6 +88,22 @@ router.put('/:id', (req, res) => {
         res.redirect(`/todo/${req.params.id}`);
       });
   });
+});
+
+router.delete('/:id', (req, res) => {
+  if(typeof req.params.id !== 'undefined') {
+    knex('todo')
+      .where('id', req.params.id)
+      .del()
+      .then(()=> {
+        res.redirect('/todo');
+      });
+  } else {
+    res.status(500);
+    res.render('error', {
+      message: 'Invalid ID'
+    });
+  }
 });
 
 module.exports = router;
