@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const knex = require('../db/knex');
+const queries = require('../db/queries');
 /* GET home page. */
 
 
@@ -12,21 +12,22 @@ function validTodo(todo) {
                 !isNaN(Number(todo.priority));
 }
 
+function setStatusRenderError(res, statusCode, message) {
+  res.status(statusCode);
+  res.render('error', {
+    message
+  });
+}
 
 function respondAndRenderTodo(id, res, viewName) {
   if(!isNaN(id)) {
-    knex('todo')
-      .select()
-      .where('id', id)
-      .first()
+    queries
+      .getOne(id)
       .then(todo => {
         res.render(viewName, todo);
       });
   } else {
-    res.status(500);
-    res.render('error', {
-      message: 'Invalid ID'
-    });
+    setStatusRenderError(res, 500, "Invalid ID");
   }
 }
 
@@ -39,10 +40,7 @@ function validateTodoInsertUpdateRedirect(req, res, callback) {
     };
     callback(todo);
   } else {
-    res.status(500);
-    res.render('error', {
-      message: 'Invalid Todo'
-    });
+    setStatusRenderError(res, 500, "Invalid Todo");
   }
 }
 
@@ -51,8 +49,8 @@ router.get('/new', (req, res) => {
 });
 
 router.get('/', (req, res) => {
-  knex('todo')
-    .select()
+  queries
+    .getAll()
     .then(todos => {
       res.render('all', { todos: todos });
     });
@@ -61,8 +59,8 @@ router.get('/', (req, res) => {
 router.post('/', (req, res) => {
   validateTodoInsertUpdateRedirect(req, res, (todo) => {
     todo.date = new Date();
-    knex('todo')
-      .insert(todo, 'id')
+    queries
+      .create(todo)
       .then(ids => {
         const { id } = ids[0];
         res.redirect(`/todo/${id}`);
@@ -82,9 +80,8 @@ router.get('/:id/edit', (req, res) => {
 
 router.put('/:id', (req, res) => {
   validateTodoInsertUpdateRedirect(req, res, (todo) => {
-    knex('todo')
-      .where('id', req.params.id)
-      .update(todo, 'id')
+    queries
+      .update(todo, req.params.id)
       .then(() => {
         res.redirect(`/todo/${req.params.id}`);
       });
@@ -93,17 +90,13 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   if(typeof req.params.id !== 'undefined') {
-    knex('todo')
-      .where('id', req.params.id)
-      .del()
+    queries
+      .delete(req.params.id)
       .then(()=> {
         res.redirect('/todo');
       });
   } else {
-    res.status(500);
-    res.render('error', {
-      message: 'Invalid ID'
-    });
+    setStatusRenderError(res, 500, "Invalid ID");
   }
 });
 
