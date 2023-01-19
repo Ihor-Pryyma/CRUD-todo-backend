@@ -14,7 +14,7 @@ function validTodo(todo) {
 
 
 function respondAndRenderTodo(id, res, viewName) {
-  if(typeof id !== 'undefined') {
+  if(!isNaN(id)) {
     knex('todo')
       .select()
       .where('id', id)
@@ -66,7 +66,7 @@ router.post('/', (req, res) => {
       .then(ids => {
         const { id } = ids[0];
         res.redirect(`/todo/${id}`);
-      });
+      }); 
   });
 });
 
